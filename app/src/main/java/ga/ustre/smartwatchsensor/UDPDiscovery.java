@@ -26,6 +26,7 @@ public class UDPDiscovery {
     public String Message = "DISCOVER_AUISERVER_REQUEST";
     private final Callbacks callbacks;
     private boolean working=false;
+    private boolean closing=false;
 
     public UDPDiscovery(Callbacks callbacks){
         this.callbacks=callbacks;
@@ -47,7 +48,7 @@ public class UDPDiscovery {
             @Override
             protected Void doInBackground(Void... params) {
                 boolean foundAddress=false;
-                while(!foundAddress) {
+                while(!closing && !foundAddress) {
                     DatagramSocket ds = null;
 
                     try {
@@ -95,9 +96,21 @@ public class UDPDiscovery {
             protected void onPostExecute(Void result) {
                 super.onPostExecute(result);
                 working=false;
+                closing=false;
             }
         };
 
         async_client.execute();
     }
+
+    public boolean isWorking(){
+        return working;
+    }
+
+    public void stopDiscovery(){
+        closing=true;
+
+    }
+
+
 }

@@ -68,10 +68,13 @@ public class MainActivity extends WearableActivity
         tv_progress = (TextView) findViewById(R.id.tv_progress);
         iv_icon = (ImageView) findViewById(R.id.iv_icon);
         bt_start_stop = (Button) findViewById(R.id.bt_start_stop);
+        bt_start_stop.setText("Move");
         bt_start_stop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                client.sendMovement(new SensorDataSendAction("Gerry", new SensorData(Calendar.getInstance().getTimeInMillis(), MovementType.GENERIC_MOVEMENT)));
+                if (client!=null) {
+                    client.sendMovement(new SensorDataSendAction("Gerry", new SensorData(Calendar.getInstance().getTimeInMillis(), MovementType.GENERIC_MOVEMENT)));
+                }
             }
         });
         this.discovery = new UDPDiscovery(this);
@@ -100,6 +103,9 @@ public class MainActivity extends WearableActivity
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (this.discovery.isWorking()){
+            this.discovery.stopDiscovery();
+        }
         stopMeasurement();
         if(this.client!=null){
             try {
