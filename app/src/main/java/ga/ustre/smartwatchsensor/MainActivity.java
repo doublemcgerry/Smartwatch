@@ -8,6 +8,8 @@ import android.hardware.SensorManager;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.PowerManager;
 import android.support.wearable.activity.WearableActivity;
 import android.support.wearable.view.BoxInsetLayout;
 import android.util.Log;
@@ -52,6 +54,9 @@ public class MainActivity extends WearableActivity
     private String clientId ;
     private UDPDiscovery discovery;
     private WebSocketClientManager client;
+    private WifiManager.WifiLock wifiLock;
+    private PowerManager.WakeLock mWakeLock;
+    private Handler mWakeLockHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,6 +66,16 @@ public class MainActivity extends WearableActivity
         WifiManager manager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         mSensorManager = ((SensorManager) getSystemService(SENSOR_SERVICE));
         WifiInfo info = manager.getConnectionInfo();
+        manager.setWifiEnabled(true);
+        wifiLock=manager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF,TAG);
+
+        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        mWakeLock = powerManager.newWakeLock((PowerManager.SCREEN_BRIGHT_WAKE_LOCK | PowerManager.FULL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP), TAG);
+
+        mWakeLockHandler = new Handler();
+
+
+
         String address = info.getMacAddress();
         clientId = deviceName + " " + address;
         mContainerView = (BoxInsetLayout) findViewById(R.id.container);
@@ -106,6 +121,7 @@ public class MainActivity extends WearableActivity
         if (this.discovery.isWorking()){
             this.discovery.stopDiscovery();
         }
+        //mWakeLock.release();
         stopMeasurement();
         if(this.client!=null){
             try {

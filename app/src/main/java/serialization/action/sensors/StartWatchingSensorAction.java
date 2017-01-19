@@ -12,6 +12,7 @@ public class StartWatchingSensorAction extends Action {
 
     @Override
     public void execute(ResultPresenter resultPresenter) {
+        resultPresenter.publishMessage("Movete!");
         resultPresenter.showIcon(R.drawable.ic_hand);
     }
 }

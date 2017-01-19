@@ -11,6 +11,7 @@ import utility.ResultPresenter;
 public class StopWatchingSensorAction extends Action {
     @Override
     public void execute(ResultPresenter resultPresenter) {
+        resultPresenter.publishMessage("nun te move!");
         resultPresenter.showIcon(R.drawable.ic_connected);
     }
 }
