@@ -10,4 +10,5 @@ public interface ResultPresenter {
     void hideProgressBar();
     void showIcon(int drawable);
     void hideIcon();
+    void triggerVibration();
 }

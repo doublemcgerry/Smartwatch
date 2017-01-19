@@ -14,5 +14,6 @@ public class StartWatchingSensorAction extends Action {
     public void execute(ResultPresenter resultPresenter) {
         resultPresenter.publishMessage("Movete!");
         resultPresenter.showIcon(R.drawable.ic_hand);
+        resultPresenter.triggerVibration();
     }
 }
