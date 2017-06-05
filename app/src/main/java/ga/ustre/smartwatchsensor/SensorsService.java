@@ -168,7 +168,7 @@ public class SensorsService extends Service implements SensorEventListener, UDPD
     }
 
     @Override
-    public void onSuccesfulWebsocketConnection() {
+    public void onSuccessfulWebsocketConnection() {
         sendNotification("Ready to analyze");
     }
 

@@ -6,7 +6,6 @@ import com.google.gson.JsonParseException;
 
 import org.java_websocket.WebSocket;
 import org.java_websocket.WebSocketListener;
-import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft;
 import org.java_websocket.exceptions.InvalidDataException;
 import org.java_websocket.framing.Framedata;
@@ -18,13 +17,10 @@ import org.java_websocket.handshake.ServerHandshakeBuilder;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.ByteBuffer;
-import java.util.UUID;
 
 import serialization.StringSerializer;
 import serialization.action.Action;
-import serialization.action.management.SmartwatchEnterLobbyAction;
 import serialization.action.sensors.SensorDataSendAction;
-import utility.SensorData;
 
 /**
  * Created by achelius on 22/12/2016.
@@ -32,10 +28,8 @@ import utility.SensorData;
 
 public class WebSocketClientManager implements WebSocketListener {
 
-
-
     public interface Callbacks{
-        void onSuccesfulWebsocketConnection();
+        void onSuccessfulWebsocketConnection();
         void onFailedConnection();
         void onMaxReconnectionAttemptsReached();
         void onActionReceived(final Action action);
@@ -85,7 +79,7 @@ public class WebSocketClientManager implements WebSocketListener {
     @Override
     public void onWebsocketOpen(WebSocket conn, Handshakedata d) {
         reconnectionAttempts=0;
-        callbacks.onSuccesfulWebsocketConnection();
+        callbacks.onSuccessfulWebsocketConnection();
     }
 
     @Override
@@ -98,7 +92,6 @@ public class WebSocketClientManager implements WebSocketListener {
         }
 
     }
-
 
     @Override
     public void onWebsocketError(WebSocket conn, Exception ex) {
@@ -128,7 +121,6 @@ public class WebSocketClientManager implements WebSocketListener {
         }
     }
 
-
     public void sendMovement(SensorDataSendAction action) {
         if (this.client!=null){
             try{
@@ -149,7 +141,6 @@ public class WebSocketClientManager implements WebSocketListener {
         }
     }
 
-
     @Override
     public ServerHandshakeBuilder onWebsocketHandshakeReceivedAsServer(WebSocket conn, Draft draft, ClientHandshake request) throws InvalidDataException {
         return null;
@@ -164,7 +155,6 @@ public class WebSocketClientManager implements WebSocketListener {
     public void onWebsocketHandshakeSentAsClient(WebSocket conn, ClientHandshake request) throws InvalidDataException {
 
     }
-
 
     @Override
     public void onWebsocketMessage(WebSocket conn, ByteBuffer blob) {

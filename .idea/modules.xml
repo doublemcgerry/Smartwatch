@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/SmartwatchSensor.iml" filepath="$PROJECT_DIR$/SmartwatchSensor.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Smartwatch.iml" filepath="$PROJECT_DIR$/Smartwatch.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>
