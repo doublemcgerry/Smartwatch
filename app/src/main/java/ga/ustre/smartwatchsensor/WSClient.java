@@ -4,6 +4,7 @@ import org.java_websocket.WebSocketListener;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 
+import java.io.Serializable;
 import java.net.URI;
 import java.util.UUID;
 
@@ -17,7 +18,7 @@ import utility.SensorData;
  * Created by achelius on 21/12/2016.
  */
 
-public class WSClient extends WebSocketClient {
+public class WSClient extends WebSocketClient implements Serializable {
 
     private WebSocketListener listener;
     private String clientId;

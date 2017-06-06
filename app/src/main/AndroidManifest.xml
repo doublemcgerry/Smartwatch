@@ -25,16 +25,20 @@
         <service
             android:name=".SensorsService"
             android:enabled="true"
-            android:exported="false"></service>
+            android:exported="false" />
 
         <activity
             android:name=".activities.MainActivity"
             android:label="@string/title_activity_main"
-            android:theme="@android:style/Theme.DeviceDefault.Light">
-        </activity>
+            android:theme="@android:style/Theme.DeviceDefault.Light"></activity>
         <activity
             android:name=".activities.CodeActivity"
             android:label="@string/title_activity_code"
+            android:theme="@android:style/Theme.DeviceDefault.Light">
+        </activity>
+        <activity
+            android:name=".activities.FirstActivity"
+            android:label="@string/title_activity_first"
             android:theme="@android:style/Theme.DeviceDefault.Light">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

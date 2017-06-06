@@ -31,7 +31,6 @@ public class SensorsService extends Service implements SensorEventListener, UDPD
     private final static int SENS_LINEAR_ACCELERATION = Sensor.TYPE_LINEAR_ACCELERATION;
     private final static int SENS_ROTATION_VECTOR = Sensor.TYPE_ROTATION_VECTOR;
 
-
     SensorManager mSensorManager;
 
     private Sensor mHeartrateSensor;
@@ -40,9 +39,6 @@ public class SensorsService extends Service implements SensorEventListener, UDPD
     private WebSocketClientManager client;
     private ScheduledExecutorService mScheduler;
     private SparseArray<List<float[]>> measurements = new SparseArray<>();
-
-
-
 
     public SensorsService() {
     }
@@ -70,7 +66,6 @@ public class SensorsService extends Service implements SensorEventListener, UDPD
         builder.setSmallIcon(R.mipmap.ic_launcher);
         startForeground(1, builder.build());
     }
-
 
     protected void startMeasurement() {
         mSensorManager = ((SensorManager) getSystemService(SENSOR_SERVICE));
@@ -102,8 +97,6 @@ public class SensorsService extends Service implements SensorEventListener, UDPD
             } else {
                 Log.d(TAG, "No Rotation Vector Sensor found");
             }
-
-
         }
     }
 
@@ -151,10 +144,7 @@ public class SensorsService extends Service implements SensorEventListener, UDPD
     }
 
     @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
-    }
-
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {    }
 
     @Override
     public void onAddressDiscovered(String address) {
@@ -183,7 +173,5 @@ public class SensorsService extends Service implements SensorEventListener, UDPD
     }
 
     @Override
-    public void onActionReceived(Action action) {
-
-    }
+    public void onActionReceived(Action action) {    }
 }

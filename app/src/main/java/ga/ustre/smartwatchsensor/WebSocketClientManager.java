@@ -14,6 +14,7 @@ import org.java_websocket.handshake.Handshakedata;
 import org.java_websocket.handshake.ServerHandshake;
 import org.java_websocket.handshake.ServerHandshakeBuilder;
 
+import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.ByteBuffer;
@@ -26,7 +27,7 @@ import serialization.action.sensors.SensorDataSendAction;
  * Created by achelius on 22/12/2016.
  */
 
-public class WebSocketClientManager implements WebSocketListener {
+public class WebSocketClientManager implements WebSocketListener,Serializable {
 
     public interface Callbacks{
         void onSuccessfulWebsocketConnection();
@@ -39,7 +40,6 @@ public class WebSocketClientManager implements WebSocketListener {
     private Callbacks callbacks;
     private String clientId;
 
-
     private int reconnectionAttempts=0;
 
     private int maxReconnectionAttempts =-1;
@@ -49,6 +49,14 @@ public class WebSocketClientManager implements WebSocketListener {
         this.clientId=clientId;
         this.uri = uri;
         this.callbacks= callbacks;
+    }
+
+    public void removeCallback(){
+        this.callbacks = null;
+    }
+
+    public void addCallback(Callbacks callback){
+        this.callbacks = callback;
     }
 
     public void connect() {
@@ -90,7 +98,6 @@ public class WebSocketClientManager implements WebSocketListener {
             }
             reconnect();
         }
-
     }
 
     @Override
