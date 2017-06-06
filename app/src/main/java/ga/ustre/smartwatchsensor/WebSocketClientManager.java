@@ -19,9 +19,9 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.ByteBuffer;
 
-import serialization.StringSerializer;
-import serialization.action.Action;
-import serialization.action.sensors.SensorDataSendAction;
+import rz.thesis.server.serialization.StringSerializer;
+import rz.thesis.server.serialization.action.Action;
+import rz.thesis.server.serialization.action.sensors.SensorDataSendAction;
 
 /**
  * Created by achelius on 22/12/2016.

@@ -1,6 +1,6 @@
-package serialization.action.auth;
+package rz.thesis.server.serialization.action.auth;
 
-import serialization.action.management.ManagementAction;
+import rz.thesis.server.serialization.action.management.ManagementAction;
 import utility.ResultPresenter;
 
 /**
@@ -22,6 +22,6 @@ public class SendCodeAction extends ManagementAction {
 
     @Override
     public void execute(ResultPresenter resultPresenter) {
-        resultPresenter.publishMessage("Codice ricevuto dal server, per effettuare il pairing cliccare sul bottone sottostante");
+        resultPresenter.publishMessage("Codice Ricevuto!");
     }
 }

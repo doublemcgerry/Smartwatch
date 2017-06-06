@@ -1,4 +1,4 @@
-package serialization.action.management;
+package rz.thesis.server.serialization.action.management;
 
 
 import utility.ResultPresenter;

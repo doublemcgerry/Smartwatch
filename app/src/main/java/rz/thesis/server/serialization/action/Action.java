@@ -1,4 +1,4 @@
-package serialization.action;
+package rz.thesis.server.serialization.action;
 
 import java.io.Serializable;
 

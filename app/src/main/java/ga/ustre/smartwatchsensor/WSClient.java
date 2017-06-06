@@ -6,13 +6,9 @@ import org.java_websocket.handshake.ServerHandshake;
 
 import java.io.Serializable;
 import java.net.URI;
-import java.util.UUID;
 
-import serialization.StringSerializer;
-import serialization.action.Action;
-import serialization.action.management.SmartwatchEnterLobbyAction;
-import serialization.action.sensors.SensorDataSendAction;
-import utility.SensorData;
+import rz.thesis.server.serialization.StringSerializer;
+import rz.thesis.server.serialization.action.Action;
 
 /**
  * Created by achelius on 21/12/2016.

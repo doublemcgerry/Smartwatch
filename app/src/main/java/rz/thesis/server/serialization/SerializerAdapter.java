@@ -1,4 +1,4 @@
-package serialization;
+package rz.thesis.server.serialization;
 import java.lang.reflect.Type;
 
 import com.google.gson.JsonDeserializationContext;
@@ -11,7 +11,7 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 
 /**
- * This generic class will define the custom serializer for json serialization,
+ * This generic class will define the custom serializer for json rz.thesis.serialization,
  * enabling the deserialization into the subclasses of an abstract class
  * 
  * @author Andrea

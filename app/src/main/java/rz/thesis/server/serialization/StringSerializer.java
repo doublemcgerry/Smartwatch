@@ -1,9 +1,9 @@
-package serialization;
+package rz.thesis.server.serialization;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import serialization.action.Action;
+import rz.thesis.server.serialization.action.Action;
 
 
 public class StringSerializer {

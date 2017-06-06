@@ -13,15 +13,12 @@ import android.util.SparseArray;
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.ScheduledExecutorService;
 
-import serialization.action.Action;
-import serialization.action.sensors.SensorDataSendAction;
+import rz.thesis.server.serialization.action.Action;
+import rz.thesis.server.serialization.action.sensors.SensorDataSendAction;
 import utility.MovementType;
 import utility.SensorData;
 

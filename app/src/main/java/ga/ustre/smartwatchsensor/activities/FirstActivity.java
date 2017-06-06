@@ -2,7 +2,6 @@ package ga.ustre.smartwatchsensor.activities;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.Intent;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -21,9 +20,9 @@ import java.util.List;
 
 import ga.ustre.smartwatchsensor.R;
 import ga.ustre.smartwatchsensor.WebSocketClientManager;
-import serialization.action.Action;
-import serialization.action.auth.SendCodeAction;
-import serialization.action.management.DeviceAnnounceAction;
+import rz.thesis.server.serialization.action.Action;
+import rz.thesis.server.serialization.action.auth.SendCodeAction;
+import rz.thesis.server.serialization.action.management.DeviceAnnounceAction;
 import utility.RandomUtils;
 import utility.ResultPresenter;
 import utility.SensorType;
@@ -40,6 +39,10 @@ public class FirstActivity extends WearableActivity implements ResultPresenter, 
     private Button codeButton;
     private WebSocketClientManager client;
     private String code;
+    private TextView firstChar;
+    private TextView secondChar;
+    private TextView thirdChar;
+    private TextView fourthChar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,7 +51,7 @@ public class FirstActivity extends WearableActivity implements ResultPresenter, 
         setAmbientEnabled();
         pb_searching = (ProgressBar) findViewById(R.id.pb_first);
         tv_progress = (TextView) findViewById(R.id.tv_first);
-        publishMessage("Connessione al server in corso");
+        publishMessage("Connessione al server in corso...");
 
         String deviceName= RandomUtils.getDeviceName();
         @SuppressLint("WifiManagerLeak") WifiManager manager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
@@ -60,14 +63,14 @@ public class FirstActivity extends WearableActivity implements ResultPresenter, 
         codeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                goToCodeActivity();
+                changeContext();
             }
         });
         mWakeLockHandler = new Handler();
 
         String address = info.getMacAddress();
         clientId = deviceName + " " + address;
-        client = new WebSocketClientManager(clientId, URI.create("ws://127.0.0.1:8010"), this);
+        client = new WebSocketClientManager(clientId, URI.create("ws://192.168.1.21:8010/ws"), this);
         client.connect();
     }
 
@@ -111,7 +114,7 @@ public class FirstActivity extends WearableActivity implements ResultPresenter, 
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                pb_searching.setVisibility(View.INVISIBLE);
+                pb_searching.setVisibility(View.GONE);
             }
         });
     }
@@ -159,19 +162,61 @@ public class FirstActivity extends WearableActivity implements ResultPresenter, 
             reply.execute(this);
             this.code = reply.getCode();
             hideProgressBar();
-            this.codeButton.setVisibility(View.VISIBLE);
-            LinearLayout.LayoutParams llp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            llp.setMargins(0, 10, 0, 0); // llp.setMargins(left, top, right, bottom);
-            tv_progress.setLayoutParams(llp);
+            setButtonVisibility();
+            hideTextView();
         }
     }
 
-    private void goToCodeActivity(){
-        Intent intent = new Intent(FirstActivity.this, CodeActivity.class);
-        intent.putExtra("code",this.code);
-        client.removeCallback();
-        intent.putExtra("wsclient",client);
-        startActivity(intent);
-        finish();
+    private void changeContext(){
+        firstChar = (TextView) findViewById(R.id.first_char);
+        secondChar = (TextView) findViewById(R.id.second_char);
+        thirdChar = (TextView) findViewById(R.id.fourth_char);
+        fourthChar = (TextView) findViewById(R.id.fourth_char);
+        if(code.length() == 4){
+            populateCode();
+        }
+        changeLayout();
+    }
+
+    private void setButtonVisibility(){
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                codeButton.setVisibility(View.VISIBLE);
+            }
+        });
+    }
+
+    private void populateCode(){
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                firstChar.setText(String.valueOf(code.charAt(0)));
+                secondChar.setText(String.valueOf(code.charAt(1)));
+                thirdChar.setText(String.valueOf(code.charAt(2)));
+                fourthChar.setText(String.valueOf(code.charAt(3)));
+            }
+        });
+    }
+
+    private void hideTextView(){
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                tv_progress.setVisibility(View.GONE);
+            }
+        });
+    }
+
+    private void changeLayout(){
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                LinearLayout layoutToHide = (LinearLayout) findViewById(R.id.loading_layout);
+                layoutToHide.setVisibility(View.GONE);
+                LinearLayout layoutToShow = (LinearLayout) findViewById(R.id.code_layout);
+                layoutToShow.setVisibility(View.VISIBLE);
+            }
+        });
     }
 }

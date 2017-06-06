@@ -2,7 +2,7 @@
     <string name="app_name">Galileo</string>
     <string name="title_activity_main">Galileo</string>
     <string name="title_activity_code">CodeActivity</string>
-    <string name="welcome_message">Benvenuto in VectorWatch ! Per poter utilizzare questo dispositivo con l\'applicazione Vector, inserisci questo codice su www.qualcosa.it!</string>
+    <string name="welcome_message">Per poter utilizzare questo dispositivo con l\'applicazione Vector, inserisci questo codice su www.qualcosa.it!</string>
     <string name="title_activity_first">FirstActivity</string>
     <string name="hello_world">Hello World!</string>
     <string name="title">VectorWatch</string>
