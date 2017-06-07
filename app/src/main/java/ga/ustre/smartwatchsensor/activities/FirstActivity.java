@@ -1,14 +1,20 @@
 package ga.ustre.smartwatchsensor.activities;
 
 import android.annotation.SuppressLint;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.PowerManager;
+import android.provider.Settings;
 import android.support.wearable.activity.WearableActivity;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -20,6 +26,9 @@ import java.util.List;
 
 import ga.ustre.smartwatchsensor.R;
 import ga.ustre.smartwatchsensor.WebSocketClientManager;
+import ga.ustre.smartwatchsensor.interfaces.WebSocketClientCallback;
+import ga.ustre.smartwatchsensor.interfaces.WebSocketServerBinder;
+import ga.ustre.smartwatchsensor.services.WebSocketManagerService;
 import rz.thesis.server.serialization.action.Action;
 import rz.thesis.server.serialization.action.auth.SendCodeAction;
 import rz.thesis.server.serialization.action.management.DeviceAnnounceAction;
@@ -27,7 +36,7 @@ import utility.RandomUtils;
 import utility.ResultPresenter;
 import utility.SensorType;
 
-public class FirstActivity extends WearableActivity implements ResultPresenter, WebSocketClientManager.Callbacks {
+public class FirstActivity extends WearableActivity implements ResultPresenter, WebSocketClientCallback{
     private static final String TAG = "galileo/main";
 
     private ProgressBar pb_searching;
@@ -37,7 +46,7 @@ public class FirstActivity extends WearableActivity implements ResultPresenter, 
     private Handler mWakeLockHandler;
     private String clientId;
     private Button codeButton;
-    private WebSocketClientManager client;
+    private WebSocketServerBinder client;
     private String code;
     private TextView firstChar;
     private TextView secondChar;
@@ -58,6 +67,11 @@ public class FirstActivity extends WearableActivity implements ResultPresenter, 
         WifiInfo info = manager.getConnectionInfo();
         manager.setWifiEnabled(true);
         wifiLock=manager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF,TAG);
+        wifiLock.acquire();
+
+        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        mWakeLock = powerManager.newWakeLock((PowerManager.PARTIAL_WAKE_LOCK|PowerManager.ACQUIRE_CAUSES_WAKEUP), TAG);
+        mWakeLock.acquire();
 
         codeButton = (Button) findViewById(R.id.code_button);
         codeButton.setOnClickListener(new View.OnClickListener() {
@@ -70,8 +84,38 @@ public class FirstActivity extends WearableActivity implements ResultPresenter, 
 
         String address = info.getMacAddress();
         clientId = deviceName + " " + address;
-        client = new WebSocketClientManager(clientId, URI.create("ws://192.168.1.21:8010/ws"), this);
-        client.connect();
+        Intent intent = new Intent(this, WebSocketManagerService.class);
+        boolean bind = bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    @Override
+    public void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON |
+                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON |
+                WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD |
+                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
+    }
+
+    private ServiceConnection mConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            client = (WebSocketServerBinder) service;
+            addCallbackToClient();
+            client.connect(clientId, URI.create("ws://192.168.31.138:8010/ws"));
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            client = null;
+        }
+    };
+
+    private void addCallbackToClient(){
+        this.client.addCallback(this);
     }
 
     @Override
@@ -147,7 +191,7 @@ public class FirstActivity extends WearableActivity implements ResultPresenter, 
     @Override
     public void onFailedConnection() {
         publishMessage("Connessione con il server Fallita, nuovo tentativo...");
-        client.connect();
+        client.connect(clientId, URI.create("ws://192.168.31.138:8010/ws"));
     }
 
     @Override
