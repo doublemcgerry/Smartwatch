@@ -63,15 +63,19 @@ public class FirstActivity extends WearableActivity implements ResultPresenter, 
         publishMessage("Connessione al server in corso...");
 
         String deviceName= RandomUtils.getDeviceName();
-        @SuppressLint("WifiManagerLeak") WifiManager manager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+        WifiManager manager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         WifiInfo info = manager.getConnectionInfo();
         manager.setWifiEnabled(true);
+
         wifiLock=manager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF,TAG);
         wifiLock.acquire();
 
         PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
-        mWakeLock = powerManager.newWakeLock((PowerManager.PARTIAL_WAKE_LOCK|PowerManager.ACQUIRE_CAUSES_WAKEUP), TAG);
-        mWakeLock.acquire();
+        PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+                "MyWakelockTag");
+        wakeLock.acquire();
+
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         codeButton = (Button) findViewById(R.id.code_button);
         codeButton.setOnClickListener(new View.OnClickListener() {
@@ -80,7 +84,6 @@ public class FirstActivity extends WearableActivity implements ResultPresenter, 
                 changeContext();
             }
         });
-        mWakeLockHandler = new Handler();
 
         String address = info.getMacAddress();
         clientId = deviceName + " " + address;
@@ -105,7 +108,7 @@ public class FirstActivity extends WearableActivity implements ResultPresenter, 
             // We've bound to LocalService, cast the IBinder and get LocalService instance
             client = (WebSocketServerBinder) service;
             addCallbackToClient();
-            client.connect(clientId, URI.create("ws://192.168.31.138:8010/ws"));
+            client.connect(clientId, URI.create("ws://192.168.1.21:8010/ws"));
         }
 
         @Override
