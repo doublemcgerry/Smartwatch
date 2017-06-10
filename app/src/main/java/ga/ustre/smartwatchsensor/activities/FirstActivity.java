@@ -1,6 +1,5 @@
 package ga.ustre.smartwatchsensor.activities;
 
-import android.annotation.SuppressLint;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -8,10 +7,8 @@ import android.content.ServiceConnection;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
-import android.provider.Settings;
 import android.support.wearable.activity.WearableActivity;
 import android.view.View;
 import android.view.WindowManager;
@@ -25,11 +22,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ga.ustre.smartwatchsensor.R;
-import ga.ustre.smartwatchsensor.WebSocketClientManager;
 import ga.ustre.smartwatchsensor.interfaces.WebSocketClientCallback;
 import ga.ustre.smartwatchsensor.interfaces.WebSocketServerBinder;
 import ga.ustre.smartwatchsensor.services.WebSocketManagerService;
 import rz.thesis.server.serialization.action.Action;
+import rz.thesis.server.serialization.action.auth.PairingConfirmationAction;
 import rz.thesis.server.serialization.action.auth.SendCodeAction;
 import rz.thesis.server.serialization.action.management.DeviceAnnounceAction;
 import utility.RandomUtils;
@@ -41,9 +38,6 @@ public class FirstActivity extends WearableActivity implements ResultPresenter, 
 
     private ProgressBar pb_searching;
     private TextView tv_progress;
-    private WifiManager.WifiLock wifiLock;
-    private PowerManager.WakeLock mWakeLock;
-    private Handler mWakeLockHandler;
     private String clientId;
     private Button codeButton;
     private WebSocketServerBinder client;
@@ -67,7 +61,7 @@ public class FirstActivity extends WearableActivity implements ResultPresenter, 
         WifiInfo info = manager.getConnectionInfo();
         manager.setWifiEnabled(true);
 
-        wifiLock=manager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF,TAG);
+        WifiManager.WifiLock wifiLock=manager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF,TAG);
         wifiLock.acquire();
 
         PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
@@ -88,7 +82,7 @@ public class FirstActivity extends WearableActivity implements ResultPresenter, 
         String address = info.getMacAddress();
         clientId = deviceName + " " + address;
         Intent intent = new Intent(this, WebSocketManagerService.class);
-        boolean bind = bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
     }
 
     @Override
@@ -184,7 +178,7 @@ public class FirstActivity extends WearableActivity implements ResultPresenter, 
     @Override
     public void onSuccessfulWebsocketConnection() {
         publishMessage("Connesso al server, In attesa del Codice");
-        List<SensorType> sensorTypes = new ArrayList<SensorType>();
+        List<SensorType> sensorTypes = new ArrayList<>();
         sensorTypes.add(SensorType.HEARTRATE);
         sensorTypes.add(SensorType.MOTION);
         DeviceAnnounceAction action = new DeviceAnnounceAction(clientId,0,0,1,sensorTypes);
@@ -212,12 +206,25 @@ public class FirstActivity extends WearableActivity implements ResultPresenter, 
             setButtonVisibility();
             hideTextView();
         }
+        else {
+            if (action instanceof PairingConfirmationAction) {
+                PairingConfirmationAction reply = (PairingConfirmationAction) action;
+                if (reply.getDeviceName().equals(clientId)){
+                    unbindService(mConnection);
+                    Intent intent = new Intent(FirstActivity.this,MainActivity.class);
+                    intent.putExtra("clientId",clientId);
+                    startActivity(intent);
+                    finish();
+                }
+            }
+        }
+
     }
 
     private void changeContext(){
         firstChar = (TextView) findViewById(R.id.first_char);
         secondChar = (TextView) findViewById(R.id.second_char);
-        thirdChar = (TextView) findViewById(R.id.fourth_char);
+        thirdChar = (TextView) findViewById(R.id.third_char);
         fourthChar = (TextView) findViewById(R.id.fourth_char);
         if(code.length() == 4){
             populateCode();

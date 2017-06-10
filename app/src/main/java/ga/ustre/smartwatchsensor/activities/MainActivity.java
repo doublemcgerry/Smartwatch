@@ -1,7 +1,9 @@
 package ga.ustre.smartwatchsensor.activities;
 
-import android.annotation.SuppressLint;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -9,13 +11,14 @@ import android.hardware.SensorManager;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import android.os.Handler;
+import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.Vibrator;
 import android.support.wearable.activity.WearableActivity;
 import android.support.wearable.view.BoxInsetLayout;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -27,16 +30,18 @@ import java.util.Calendar;
 import ga.ustre.smartwatchsensor.R;
 import ga.ustre.smartwatchsensor.UDPDiscovery;
 import ga.ustre.smartwatchsensor.WebSocketClientManager;
+import ga.ustre.smartwatchsensor.services.WebSocketManagerService;
 import rz.thesis.server.serialization.action.Action;
 import rz.thesis.server.serialization.action.management.SmartwatchEnterLobbyAction;
 import rz.thesis.server.serialization.action.sensors.SensorDataSendAction;
+import rz.thesis.server.serialization.action.sensors.StartWatchingSensorAction;
+import rz.thesis.server.serialization.action.sensors.StopWatchingSensorAction;
 import utility.MovementType;
-import utility.RandomUtils;
 import utility.ResultPresenter;
 import utility.SensorData;
 
 public class MainActivity extends WearableActivity
-        implements SensorEventListener, UDPDiscovery.Callbacks,
+        implements SensorEventListener,
         WebSocketClientManager.Callbacks,
         ResultPresenter{
     private static final String TAG = "galileo/main";
@@ -53,30 +58,25 @@ public class MainActivity extends WearableActivity
     private Button bt_start_stop;
 
     private String clientId ;
-    private UDPDiscovery discovery;
     private WebSocketClientManager client;
-    private WifiManager.WifiLock wifiLock;
-    private PowerManager.WakeLock mWakeLock;
-    private Handler mWakeLockHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        String deviceName= RandomUtils.getDeviceName();
-        @SuppressLint("WifiManagerLeak") WifiManager manager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-        mSensorManager = ((SensorManager) getSystemService(SENSOR_SERVICE));
-        WifiInfo info = manager.getConnectionInfo();
+        Bundle intentBundle = getIntent().getExtras();
+        clientId = intentBundle.getString("clientId");
+
+        WifiManager manager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         manager.setWifiEnabled(true);
-        wifiLock=manager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF,TAG);
-
+        WifiManager.WifiLock wifiLock=manager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF,TAG);
+        wifiLock.acquire();
         PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
-        mWakeLock = powerManager.newWakeLock((PowerManager.SCREEN_BRIGHT_WAKE_LOCK | PowerManager.FULL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP), TAG);
+        PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+                "MyWakelockTag");
+        wakeLock.acquire();
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        mWakeLockHandler = new Handler();
-
-        String address = info.getMacAddress();
-        clientId = deviceName + " " + address;
         mContainerView = (BoxInsetLayout) findViewById(R.id.container);
         pb_searching = (ProgressBar) findViewById(R.id.pb_searching);
         tv_progress = (TextView) findViewById(R.id.tv_progress);
@@ -91,10 +91,25 @@ public class MainActivity extends WearableActivity
                 }
             }
         });
-        this.discovery = new UDPDiscovery(this);
-        this.discovery.SendDiscovery();
+
+        Intent intent = new Intent(this, WebSocketManagerService.class);
+        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
         startMeasurement();
     }
+
+    private ServiceConnection mConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            publishMessage("Sto aspettando che tutti i dispositivi siano connessi");
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            client = null;
+        }
+    };
 
     @Override
     public void onEnterAmbient(Bundle ambientDetails) {
@@ -114,10 +129,6 @@ public class MainActivity extends WearableActivity
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (this.discovery.isWorking()){
-            this.discovery.stopDiscovery();
-        }
-        //mWakeLock.release();
         stopMeasurement();
         if(this.client!=null){
             try {
@@ -186,24 +197,9 @@ public class MainActivity extends WearableActivity
     }
 
     @Override
-    public void onAddressDiscovered(final String address) {
-        hideProgressBar();
-        publishMessage("Trovato server a:" + address);
-        client = new WebSocketClientManager(clientId, URI.create("ws://" + address + ":8091"), this);
-        client.connect();
-    }
-
-    @Override
-    public void onProgressUpdate(final String message) {
-        publishMessage(message);
-    }
-
-    @Override
     public void onSuccessfulWebsocketConnection() {
         publishMessage("Connected to the server");
         showIcon(R.drawable.ic_connected);
-        SmartwatchEnterLobbyAction eza = new SmartwatchEnterLobbyAction(this.clientId.toString());
-        client.sendAction(eza);
     }
 
     @Override
@@ -217,13 +213,15 @@ public class MainActivity extends WearableActivity
         publishMessage("Reconnection failed");
         hideIcon();
         showProgressBar();
-        this.discovery.SendDiscovery();
     }
 
     @Override
     public void onActionReceived(Action action) {
-        if (action != null) {
+        if (action instanceof StartWatchingSensorAction || action instanceof StopWatchingSensorAction) {
             action.execute(this);
+        }
+        else {
+            //TODO mostrare una qualche icona quando parte l'esperienza
         }
     }
 
