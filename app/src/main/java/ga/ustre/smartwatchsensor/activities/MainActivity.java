@@ -25,13 +25,17 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 import ga.ustre.smartwatchsensor.R;
 import ga.ustre.smartwatchsensor.UDPDiscovery;
 import ga.ustre.smartwatchsensor.WebSocketClientManager;
+import ga.ustre.smartwatchsensor.interfaces.WebSocketServerBinder;
 import ga.ustre.smartwatchsensor.services.WebSocketManagerService;
 import rz.thesis.server.serialization.action.Action;
+import rz.thesis.server.serialization.action.management.DeviceAnnounceAction;
 import rz.thesis.server.serialization.action.management.SmartwatchEnterLobbyAction;
 import rz.thesis.server.serialization.action.sensors.SensorDataSendAction;
 import rz.thesis.server.serialization.action.sensors.StartWatchingSensorAction;
@@ -39,6 +43,7 @@ import rz.thesis.server.serialization.action.sensors.StopWatchingSensorAction;
 import utility.MovementType;
 import utility.ResultPresenter;
 import utility.SensorData;
+import utility.SensorType;
 
 public class MainActivity extends WearableActivity
         implements SensorEventListener,
@@ -58,7 +63,7 @@ public class MainActivity extends WearableActivity
     private Button bt_start_stop;
 
     private String clientId ;
-    private WebSocketClientManager client;
+    private WebSocketServerBinder client;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,7 +107,12 @@ public class MainActivity extends WearableActivity
         @Override
         public void onServiceConnected(ComponentName className,
                                        IBinder service) {
-            publishMessage("Sto aspettando che tutti i dispositivi siano connessi");
+            client = (WebSocketServerBinder) service;
+            List<SensorType> sensorTypes = new ArrayList<>();
+            sensorTypes.add(SensorType.HEARTRATE);
+            sensorTypes.add(SensorType.MOTION);
+            DeviceAnnounceAction action = new DeviceAnnounceAction(clientId,0,0,1,sensorTypes);
+            client.sendAction(action);
         }
 
         @Override

@@ -27,7 +27,7 @@ import ga.ustre.smartwatchsensor.interfaces.WebSocketServerBinder;
 import ga.ustre.smartwatchsensor.services.WebSocketManagerService;
 import rz.thesis.server.serialization.action.Action;
 import rz.thesis.server.serialization.action.auth.PairingConfirmationAction;
-import rz.thesis.server.serialization.action.auth.SendCodeAction;
+import rz.thesis.server.serialization.action.auth.AuthCodeAction;
 import rz.thesis.server.serialization.action.management.DeviceAnnounceAction;
 import utility.RandomUtils;
 import utility.ResultPresenter;
@@ -178,11 +178,6 @@ public class FirstActivity extends WearableActivity implements ResultPresenter, 
     @Override
     public void onSuccessfulWebsocketConnection() {
         publishMessage("Connesso al server, In attesa del Codice");
-        List<SensorType> sensorTypes = new ArrayList<>();
-        sensorTypes.add(SensorType.HEARTRATE);
-        sensorTypes.add(SensorType.MOTION);
-        DeviceAnnounceAction action = new DeviceAnnounceAction(clientId,0,0,1,sensorTypes);
-        client.sendAction(action);
     }
 
     @Override
@@ -198,8 +193,8 @@ public class FirstActivity extends WearableActivity implements ResultPresenter, 
 
     @Override
     public void onActionReceived(Action action) {
-        if( action instanceof SendCodeAction){
-            SendCodeAction reply = (SendCodeAction) action;
+        if( action instanceof AuthCodeAction){
+            AuthCodeAction reply = (AuthCodeAction) action;
             reply.execute(this);
             this.code = reply.getCode();
             hideProgressBar();
