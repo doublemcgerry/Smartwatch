@@ -12,10 +12,12 @@ public class PairingConfirmationAction extends ManagementAction {
     private static final long serialVersionUID = -1692216914762512270L;
     private String deviceName;
     private String userName;
+    private String sessionId;
 
-    public PairingConfirmationAction(String deviceName, String userName) {
+    public PairingConfirmationAction(String deviceName, String userName, String sessionId) {
         this.deviceName = deviceName;
         this.userName = userName;
+        this.sessionId = sessionId;
     }
 
     public String getDeviceName() {
