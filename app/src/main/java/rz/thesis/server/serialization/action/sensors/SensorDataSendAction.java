@@ -1,7 +1,8 @@
 package rz.thesis.server.serialization.action.sensors;
 
 
-import utility.ResultPresenter;
+import ga.ustre.smartwatchsensor.interfaces.WebSocketServerBinder;
+import utility.ActionExecutor;
 import utility.SensorData;
 
 public class SensorDataSendAction extends SensorsAction {
@@ -17,7 +18,7 @@ public class SensorDataSendAction extends SensorsAction {
     }
 
     @Override
-    public void execute(ResultPresenter resultPresenter) {
+    public void execute(ActionExecutor actionExecutor, WebSocketServerBinder client) {
 
     }
 }

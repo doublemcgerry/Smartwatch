@@ -20,35 +20,36 @@ import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.List;
+import java.util.UUID;
 
 import ga.ustre.smartwatchsensor.R;
-import ga.ustre.smartwatchsensor.UDPDiscovery;
 import ga.ustre.smartwatchsensor.WebSocketClientManager;
+import ga.ustre.smartwatchsensor.interfaces.WebSocketClientCallback;
 import ga.ustre.smartwatchsensor.interfaces.WebSocketServerBinder;
 import ga.ustre.smartwatchsensor.services.WebSocketManagerService;
 import rz.thesis.server.serialization.action.Action;
-import rz.thesis.server.serialization.action.management.DeviceAnnounceAction;
-import rz.thesis.server.serialization.action.management.SmartwatchEnterLobbyAction;
+import rz.thesis.server.serialization.action.auth.ReconnectAction;
+import rz.thesis.server.serialization.action.lobby.BindSensorSlotAction;
 import rz.thesis.server.serialization.action.sensors.SensorDataSendAction;
 import rz.thesis.server.serialization.action.sensors.StartWatchingSensorAction;
 import rz.thesis.server.serialization.action.sensors.StopWatchingSensorAction;
 import utility.MovementType;
-import utility.ResultPresenter;
+import utility.RandomUtils;
+import utility.ActionExecutor;
 import utility.SensorData;
 import utility.SensorType;
 
 public class MainActivity extends WearableActivity
         implements SensorEventListener,
-        WebSocketClientManager.Callbacks,
-        ResultPresenter{
+        WebSocketClientCallback,
+        ActionExecutor {
     private static final String TAG = "galileo/main";
     private final static int SENS_GYROSCOPE = Sensor.TYPE_GYROSCOPE;
     private final static int SENS_LINEAR_ACCELERATION = Sensor.TYPE_LINEAR_ACCELERATION;
@@ -64,6 +65,10 @@ public class MainActivity extends WearableActivity
 
     private String clientId ;
     private WebSocketServerBinder client;
+    private UUID actionID;
+    private String lobbyID;
+    private boolean heartClicked;
+    private boolean handClicked;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,15 +76,21 @@ public class MainActivity extends WearableActivity
         setContentView(R.layout.activity_main);
         Bundle intentBundle = getIntent().getExtras();
         clientId = intentBundle.getString("clientId");
+        actionID = UUID.fromString(intentBundle.getString("ACTIONID"));
+        lobbyID = intentBundle.getString("LOBBY");
 
         WifiManager manager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        WifiInfo info = manager.getConnectionInfo();
         manager.setWifiEnabled(true);
+
         WifiManager.WifiLock wifiLock=manager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF,TAG);
         wifiLock.acquire();
+
         PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
         PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
                 "MyWakelockTag");
         wakeLock.acquire();
+
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         mContainerView = (BoxInsetLayout) findViewById(R.id.container);
@@ -87,7 +98,6 @@ public class MainActivity extends WearableActivity
         tv_progress = (TextView) findViewById(R.id.tv_progress);
         iv_icon = (ImageView) findViewById(R.id.iv_icon);
         bt_start_stop = (Button) findViewById(R.id.bt_start_stop);
-        bt_start_stop.setText("Move");
         bt_start_stop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -97,9 +107,88 @@ public class MainActivity extends WearableActivity
             }
         });
 
+        heartClicked = false;
+        handClicked = false;
+
+        ImageView heart = (ImageView) findViewById(R.id.heart);
+        heart.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(heartClicked){
+                    heartClicked = false;
+                    MainActivity.this.deClickImage(true);
+                }
+                else {
+                    heartClicked = true;
+                    MainActivity.this.clickImage(true);
+                }
+
+            }
+        });
+
+        ImageView hand = (ImageView) findViewById(R.id.hand);
+        hand.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(handClicked){
+                    handClicked = false;
+                    MainActivity.this.deClickImage(false);
+                }
+                else {
+                    handClicked = true;
+                    MainActivity.this.clickImage(false);
+                }
+
+            }
+        });
+
+        final Button select = (Button) findViewById(R.id.select);
+        select.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(handClicked){
+                    BindSensorSlotAction action = new BindSensorSlotAction(SensorType.MOTION);
+                    client.sendAction(action);
+                }
+                if(heartClicked){
+                    BindSensorSlotAction action = new BindSensorSlotAction(SensorType.HEARTRATE);
+                    client.sendAction(action);
+                }
+                select.setEnabled(false);
+            }
+        });
+
         Intent intent = new Intent(this, WebSocketManagerService.class);
-        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
-        startMeasurement();
+        intent.putExtra("ACTIONID",actionID.toString());
+        bindService(intent, mConnection, 0);
+    }
+
+    private void clickImage(final boolean heart){
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if(heart){
+                    findViewById(R.id.heart_tick).setVisibility(View.VISIBLE);
+                }
+                else{
+                    findViewById(R.id.hand_tick).setVisibility(View.VISIBLE);
+                }
+            }
+        });
+    }
+
+    private void deClickImage(final boolean heart){
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if(heart){
+                    findViewById(R.id.heart_tick).setVisibility(View.GONE);
+                }
+                else{
+                    findViewById(R.id.hand_tick).setVisibility(View.GONE);
+                }
+            }
+        });
     }
 
     private ServiceConnection mConnection = new ServiceConnection() {
@@ -108,11 +197,9 @@ public class MainActivity extends WearableActivity
         public void onServiceConnected(ComponentName className,
                                        IBinder service) {
             client = (WebSocketServerBinder) service;
-            List<SensorType> sensorTypes = new ArrayList<>();
-            sensorTypes.add(SensorType.HEARTRATE);
-            sensorTypes.add(SensorType.MOTION);
-            DeviceAnnounceAction action = new DeviceAnnounceAction(clientId,0,0,1,sensorTypes);
-            client.sendAction(action);
+            addCallbackToClient();
+            publishMessage("In attesa dell'Esperienza");
+            //client.connect(clientId, URI.create("ws://192.168.1.21:8010/ws"));
         }
 
         @Override
@@ -120,6 +207,10 @@ public class MainActivity extends WearableActivity
             client = null;
         }
     };
+
+    private void addCallbackToClient(){
+        this.client.addCallback(this);
+    }
 
     @Override
     public void onEnterAmbient(Bundle ambientDetails) {
@@ -208,14 +299,13 @@ public class MainActivity extends WearableActivity
 
     @Override
     public void onSuccessfulWebsocketConnection() {
-        publishMessage("Connected to the server");
-        showIcon(R.drawable.ic_connected);
+        ReconnectAction action = new ReconnectAction(lobbyID);
+        client.sendAction(action);
     }
 
     @Override
     public void onFailedConnection() {
         publishMessage("Connection failed");
-
     }
 
     @Override
@@ -227,12 +317,7 @@ public class MainActivity extends WearableActivity
 
     @Override
     public void onActionReceived(Action action) {
-        if (action instanceof StartWatchingSensorAction || action instanceof StopWatchingSensorAction) {
-            action.execute(this);
-        }
-        else {
-            //TODO mostrare una qualche icona quando parte l'esperienza
-        }
+        action.execute(this,client);
     }
 
     @Override
@@ -293,5 +378,36 @@ public class MainActivity extends WearableActivity
         //-1 - don't repeat
         final int indexInPatternToRepeat = -1;
         vibrator.vibrate(vibrationPattern, indexInPatternToRepeat);
+    }
+
+    @Override
+    public void saveCode(String code) {
+
+    }
+
+    @Override
+    public void changeContext(boolean firstContext) {
+        if(firstContext){
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    FrameLayout oldLayout = (FrameLayout) findViewById(R.id.progressBar);
+                    oldLayout.setVisibility(View.GONE);
+                    FrameLayout newLayout = (FrameLayout) findViewById(R.id.sensorSelector);
+                    newLayout.setVisibility(View.VISIBLE);
+                }
+            });
+        }
+        else {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    FrameLayout oldLayout = (FrameLayout) findViewById(R.id.sensorSelector);
+                    oldLayout.setVisibility(View.GONE);
+                    FrameLayout newLayout = (FrameLayout) findViewById(R.id.progressBar);
+                    newLayout.setVisibility(View.VISIBLE);
+                }
+            });
+        }
     }
 }

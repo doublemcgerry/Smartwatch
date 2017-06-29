@@ -2,7 +2,8 @@ package rz.thesis.server.serialization.action.management;
 
 import java.util.List;
 
-import utility.ResultPresenter;
+import ga.ustre.smartwatchsensor.interfaces.WebSocketServerBinder;
+import utility.ActionExecutor;
 import utility.SensorType;
 
 /**
@@ -21,7 +22,7 @@ public class DeviceAnnounceAction extends ActorAnnounceAction {
     }
 
     @Override
-    public void execute(ResultPresenter resultPresenter) {
+    public void execute(ActionExecutor actionExecutor, WebSocketServerBinder client) {
 
     }
 }

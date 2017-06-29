@@ -1,7 +1,8 @@
 package rz.thesis.server.serialization.action.auth;
 
+import ga.ustre.smartwatchsensor.interfaces.WebSocketServerBinder;
 import rz.thesis.server.serialization.action.management.ManagementAction;
-import utility.ResultPresenter;
+import utility.ActionExecutor;
 
 /**
  * Created by lollo on 06/06/2017.
@@ -21,7 +22,9 @@ public class AuthCodeAction extends ManagementAction {
     }
 
     @Override
-    public void execute(ResultPresenter resultPresenter) {
-        resultPresenter.publishMessage("Codice Ricevuto!");
+    public void execute(ActionExecutor actionExecutor, WebSocketServerBinder client) {
+        actionExecutor.saveCode(this.code);
+        actionExecutor.publishMessage("Codice Ricevuto!");
+        actionExecutor.hideProgressBar();
     }
 }

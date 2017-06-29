@@ -20,20 +20,23 @@ import android.widget.TextView;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import ga.ustre.smartwatchsensor.R;
 import ga.ustre.smartwatchsensor.interfaces.WebSocketClientCallback;
 import ga.ustre.smartwatchsensor.interfaces.WebSocketServerBinder;
 import ga.ustre.smartwatchsensor.services.WebSocketManagerService;
 import rz.thesis.server.serialization.action.Action;
-import rz.thesis.server.serialization.action.auth.PairingConfirmationAction;
+import rz.thesis.server.serialization.action.auth.AnnounceDemandAction;
+import rz.thesis.server.serialization.action.auth.ConnectAction;
 import rz.thesis.server.serialization.action.auth.AuthCodeAction;
+import rz.thesis.server.serialization.action.lobby.SuccessfulConnectionEvent;
 import rz.thesis.server.serialization.action.management.DeviceAnnounceAction;
 import utility.RandomUtils;
-import utility.ResultPresenter;
+import utility.ActionExecutor;
 import utility.SensorType;
 
-public class FirstActivity extends WearableActivity implements ResultPresenter, WebSocketClientCallback{
+public class FirstActivity extends WearableActivity implements ActionExecutor, WebSocketClientCallback{
     private static final String TAG = "galileo/main";
 
     private ProgressBar pb_searching;
@@ -46,6 +49,10 @@ public class FirstActivity extends WearableActivity implements ResultPresenter, 
     private TextView secondChar;
     private TextView thirdChar;
     private TextView fourthChar;
+    private UUID actionID;
+    private WifiManager.WifiLock wifiLock ;
+    private PowerManager.WakeLock wakeLock;
+    private String lobbyID;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,15 +64,16 @@ public class FirstActivity extends WearableActivity implements ResultPresenter, 
         publishMessage("Connessione al server in corso...");
 
         String deviceName= RandomUtils.getDeviceName();
+
         WifiManager manager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         WifiInfo info = manager.getConnectionInfo();
         manager.setWifiEnabled(true);
 
-        WifiManager.WifiLock wifiLock=manager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF,TAG);
+        wifiLock=manager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF,TAG);
         wifiLock.acquire();
 
         PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
-        PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
                 "MyWakelockTag");
         wakeLock.acquire();
 
@@ -75,14 +83,18 @@ public class FirstActivity extends WearableActivity implements ResultPresenter, 
         codeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                changeContext();
+                changeContext(true);
             }
         });
+
+        actionID = UUID.randomUUID();
 
         String address = info.getMacAddress();
         clientId = deviceName + " " + address;
         Intent intent = new Intent(this, WebSocketManagerService.class);
-        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+        intent.putExtra("ACTIONID",actionID.toString());
+        bindService(intent, mConnection, 0);
+        startService(intent);
     }
 
     @Override
@@ -141,26 +153,6 @@ public class FirstActivity extends WearableActivity implements ResultPresenter, 
     }
 
     @Override
-    public void showProgressBar() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                pb_searching.setVisibility(View.VISIBLE);
-            }
-        });
-    }
-
-    @Override
-    public void hideProgressBar() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                pb_searching.setVisibility(View.GONE);
-            }
-        });
-    }
-
-    @Override
     public void showIcon(int drawable) {
 
     }
@@ -176,14 +168,20 @@ public class FirstActivity extends WearableActivity implements ResultPresenter, 
     }
 
     @Override
+    public void saveCode(String code) {
+        this.code = code;
+    }
+
+    @Override
     public void onSuccessfulWebsocketConnection() {
         publishMessage("Connesso al server, In attesa del Codice");
+        client.sendAction(new ConnectAction());
     }
 
     @Override
     public void onFailedConnection() {
         publishMessage("Connessione con il server Fallita, nuovo tentativo...");
-        client.connect(clientId, URI.create("ws://192.168.31.138:8010/ws"));
+        client.connect(clientId, URI.create("ws://192.168.1.21:8010/ws"));
     }
 
     @Override
@@ -193,30 +191,29 @@ public class FirstActivity extends WearableActivity implements ResultPresenter, 
 
     @Override
     public void onActionReceived(Action action) {
-        if( action instanceof AuthCodeAction){
-            AuthCodeAction reply = (AuthCodeAction) action;
-            reply.execute(this);
-            this.code = reply.getCode();
-            hideProgressBar();
-            setButtonVisibility();
-            hideTextView();
+        action.execute(this,client);
+        if(action instanceof SuccessfulConnectionEvent){
+            SuccessfulConnectionEvent reply = (SuccessfulConnectionEvent) action;
+            startNewActivity(reply.getLobby());
         }
-        else {
-            if (action instanceof PairingConfirmationAction) {
-                PairingConfirmationAction reply = (PairingConfirmationAction) action;
-                if (reply.getDeviceName().equals(clientId)){
-                    unbindService(mConnection);
-                    Intent intent = new Intent(FirstActivity.this,MainActivity.class);
-                    intent.putExtra("clientId",clientId);
-                    startActivity(intent);
-                    finish();
-                }
-            }
-        }
-
     }
 
-    private void changeContext(){
+    private void startNewActivity(String lobbyID){
+        this.lobbyID = lobbyID;
+        client.removeCallback();
+        unbindService(mConnection);
+        Intent intent = new Intent(FirstActivity.this,MainActivity.class);
+        intent.putExtra("clientId",clientId);
+        intent.putExtra("ACTIONID",actionID.toString());
+        intent.putExtra("LOBBY",lobbyID);
+        FirstActivity.this.startActivity(intent);
+        wifiLock.release();
+        wakeLock.release();
+        finish();
+    }
+
+    @Override
+    public void changeContext(boolean firstContext){
         firstChar = (TextView) findViewById(R.id.first_char);
         secondChar = (TextView) findViewById(R.id.second_char);
         thirdChar = (TextView) findViewById(R.id.third_char);
@@ -225,15 +222,6 @@ public class FirstActivity extends WearableActivity implements ResultPresenter, 
             populateCode();
         }
         changeLayout();
-    }
-
-    private void setButtonVisibility(){
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                codeButton.setVisibility(View.VISIBLE);
-            }
-        });
     }
 
     private void populateCode(){
@@ -248,15 +236,6 @@ public class FirstActivity extends WearableActivity implements ResultPresenter, 
         });
     }
 
-    private void hideTextView(){
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                tv_progress.setVisibility(View.GONE);
-            }
-        });
-    }
-
     private void changeLayout(){
         runOnUiThread(new Runnable() {
             @Override
@@ -265,6 +244,28 @@ public class FirstActivity extends WearableActivity implements ResultPresenter, 
                 layoutToHide.setVisibility(View.GONE);
                 LinearLayout layoutToShow = (LinearLayout) findViewById(R.id.code_layout);
                 layoutToShow.setVisibility(View.VISIBLE);
+            }
+        });
+    }
+
+    @Override
+    public void showProgressBar() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                pb_searching.setVisibility(View.VISIBLE);
+            }
+        });
+    }
+
+    @Override
+    public void hideProgressBar() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                pb_searching.setVisibility(View.GONE);
+                codeButton.setVisibility(View.VISIBLE);
+                tv_progress.setVisibility(View.GONE);
             }
         });
     }

@@ -7,6 +7,7 @@ import android.os.IBinder;
 import android.os.IInterface;
 import android.os.Parcel;
 import android.os.RemoteException;
+import android.support.annotation.IntDef;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
@@ -26,6 +27,7 @@ import java.io.FileDescriptor;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.ByteBuffer;
+import java.util.UUID;
 
 import ga.ustre.smartwatchsensor.WSClient;
 import ga.ustre.smartwatchsensor.interfaces.WebSocketClientCallback;
@@ -44,6 +46,7 @@ public class WebSocketManagerService extends Service implements WebSocketListene
     private WSClient client;
     private WebSocketClientCallback callbacks;
     private String clientId;
+    private UUID ACTIONID;
 
     private int reconnectionAttempts=0;
     private int maxReconnectionAttempts =-1;
@@ -91,11 +94,23 @@ public class WebSocketManagerService extends Service implements WebSocketListene
         public void reconnect() {
             WebSocketManagerService.this.reconnect();
         }
+
+        @Override
+        public String getClientId() {
+            return WebSocketManagerService.this.getClientId();
+        }
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        this.ACTIONID = UUID.fromString(intent.getStringExtra("ACTIONID"));
+        return super.onStartCommand(intent, flags, startId);
     }
 
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
+        this.ACTIONID = UUID.fromString(intent.getStringExtra("ACTIONID"));
         return new WebSocketManagerServiceBinder(intent);
     }
 
@@ -117,6 +132,10 @@ public class WebSocketManagerService extends Service implements WebSocketListene
         if (this.client != null) {
             this.client.closeBlocking();
         }
+    }
+
+    private String getClientId(){
+        return this.clientId;
     }
 
     private void reconnect() {
@@ -141,6 +160,7 @@ public class WebSocketManagerService extends Service implements WebSocketListene
     private void sendAction(Action action) {
         if (this.client!=null){
             try{
+                action.setSource(ACTIONID);
                 this.client.sendAction(action);
             }catch(Exception e){
                 e.printStackTrace();
@@ -189,7 +209,7 @@ public class WebSocketManagerService extends Service implements WebSocketListene
     public void onWebsocketMessage(WebSocket conn, String message) {
         try{
             Action action= StringSerializer.getSerializer().fromJson(message,Action.class);
-            if (action!=null) {
+            if (action!=null && action.getDestination().equals(ACTIONID)) {
                 callbacks.onActionReceived(action);
             }
         }catch (JsonParseException ex){

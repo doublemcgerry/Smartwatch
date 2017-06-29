@@ -19,4 +19,5 @@ public interface WebSocketServerBinder{
     void removeCallback();
     void disconnect() throws InterruptedException;
     void reconnect();
+    String getClientId();
 }

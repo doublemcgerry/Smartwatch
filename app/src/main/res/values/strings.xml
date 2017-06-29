@@ -7,4 +7,12 @@
     <string name="hello_world">Hello World!</string>
     <string name="title">VectorWatch</string>
     <string name="go_to_code">Vai al Codice</string>
+    <string name="select">Seleziona</string>
+    <string name="tick">selected</string>
+    <string name="hand">Hand</string>
+    <string name="heart">Heart</string>
+    <string name="loading">Caricamento...</string>
+    <string name="move">Muovi!</string>
+    <string name="helperContainer">Container of Images</string>
+    <string name="instruction">Clicca sull\'immagine per selezionare il sensore</string>
 </resources>

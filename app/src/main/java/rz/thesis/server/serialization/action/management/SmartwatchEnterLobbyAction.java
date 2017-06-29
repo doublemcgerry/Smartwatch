@@ -1,7 +1,8 @@
 package rz.thesis.server.serialization.action.management;
 
 
-import utility.ResultPresenter;
+import ga.ustre.smartwatchsensor.interfaces.WebSocketServerBinder;
+import utility.ActionExecutor;
 
 public class SmartwatchEnterLobbyAction extends ManagementAction {
 	private static final long serialVersionUID = -3018483622075602666L;
@@ -12,7 +13,7 @@ public class SmartwatchEnterLobbyAction extends ManagementAction {
 	}
 
 	@Override
-	public void execute(ResultPresenter resultPresenter) {
+	public void execute(ActionExecutor actionExecutor, WebSocketServerBinder client) {
 
 	}
 }
