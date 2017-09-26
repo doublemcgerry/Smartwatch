@@ -1,7 +1,8 @@
-package rz.thesis.server.serialization.action.lobby;
+package rz.thesis.server.serialization.action.lobby.experience;
 
 
 import ga.ustre.smartwatchsensor.interfaces.WebSocketServerBinder;
+import rz.thesis.server.serialization.action.lobby.LobbyAction;
 import rz.thesis.server.serialization.experience.ExperienceDevicesStatus;
 import utility.ActionExecutor;
 
@@ -11,8 +12,6 @@ public class SelectedExperienceEvent extends LobbyAction {
 
 	@Override
 	public void execute(ActionExecutor actionExecutor, WebSocketServerBinder client) {
-		actionExecutor.publishMessage("Hai selezionato l'esperienza");
-		actionExecutor.hideProgressBar();
-        actionExecutor.changeContext(true);
+		actionExecutor.publishMessage("Esperienza Selezionata");
 	}
 }

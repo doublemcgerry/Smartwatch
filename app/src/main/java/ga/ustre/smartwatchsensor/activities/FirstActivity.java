@@ -114,7 +114,7 @@ public class FirstActivity extends WearableActivity implements ActionExecutor, W
             // We've bound to LocalService, cast the IBinder and get LocalService instance
             client = (WebSocketServerBinder) service;
             addCallbackToClient();
-            client.connect(clientId, URI.create("ws://192.168.1.21:8010/ws"));
+            client.connect(clientId, URI.create("ws://192.168.1.227:8010/ws"));
         }
 
         @Override
@@ -181,7 +181,7 @@ public class FirstActivity extends WearableActivity implements ActionExecutor, W
     @Override
     public void onFailedConnection() {
         publishMessage("Connessione con il server Fallita, nuovo tentativo...");
-        client.connect(clientId, URI.create("ws://192.168.1.21:8010/ws"));
+        client.connect(clientId, URI.create("ws://192.168.1.227:8010/ws"));
     }
 
     @Override
