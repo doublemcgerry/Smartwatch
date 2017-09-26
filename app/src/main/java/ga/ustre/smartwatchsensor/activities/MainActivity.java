@@ -310,12 +310,23 @@ public class MainActivity extends WearableActivity
 
     @Override
     public void changeContext(boolean firstContext) {
-        startMeasurement();
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                bt_start_stop.setVisibility(View.VISIBLE);
-            }
-        });
+        if(firstContext) {
+            startMeasurement();
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    bt_start_stop.setVisibility(View.VISIBLE);
+                }
+            });
+        }
+        else {
+            stopMeasurement();
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    bt_start_stop.setVisibility(View.GONE);
+                }
+            });
+        }
     }
 }
