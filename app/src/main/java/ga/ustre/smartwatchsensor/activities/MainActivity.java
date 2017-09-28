@@ -78,6 +78,7 @@ public class MainActivity extends WearableActivity
         clientId = intentBundle.getString("clientId");
         actionID = UUID.fromString(intentBundle.getString("ACTIONID"));
         lobbyID = intentBundle.getString("LOBBY");
+        mSensorManager = ((SensorManager) getSystemService(SENSOR_SERVICE));
 
         WifiManager manager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         WifiInfo info = manager.getConnectionInfo();
@@ -106,89 +107,11 @@ public class MainActivity extends WearableActivity
                 }
             }
         });
-
-        heartClicked = false;
-        handClicked = false;
-
-        ImageView heart = (ImageView) findViewById(R.id.heart);
-        heart.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(heartClicked){
-                    heartClicked = false;
-                    MainActivity.this.deClickImage(true);
-                }
-                else {
-                    heartClicked = true;
-                    MainActivity.this.clickImage(true);
-                }
-
-            }
-        });
-
-        ImageView hand = (ImageView) findViewById(R.id.hand);
-        hand.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(handClicked){
-                    handClicked = false;
-                    MainActivity.this.deClickImage(false);
-                }
-                else {
-                    handClicked = true;
-                    MainActivity.this.clickImage(false);
-                }
-
-            }
-        });
-
-        final Button select = (Button) findViewById(R.id.select);
-        select.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(handClicked){
-                    BindSensorSlotAction action = new BindSensorSlotAction(SensorType.MOTION);
-                    client.sendAction(action);
-                }
-                if(heartClicked){
-                    BindSensorSlotAction action = new BindSensorSlotAction(SensorType.HEARTRATE);
-                    client.sendAction(action);
-                }
-                select.setEnabled(false);
-            }
-        });
+        bt_start_stop.setVisibility(View.GONE);
 
         Intent intent = new Intent(this, WebSocketManagerService.class);
         intent.putExtra("ACTIONID",actionID.toString());
         bindService(intent, mConnection, 0);
-    }
-
-    private void clickImage(final boolean heart){
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if(heart){
-                    findViewById(R.id.heart_tick).setVisibility(View.VISIBLE);
-                }
-                else{
-                    findViewById(R.id.hand_tick).setVisibility(View.VISIBLE);
-                }
-            }
-        });
-    }
-
-    private void deClickImage(final boolean heart){
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if(heart){
-                    findViewById(R.id.heart_tick).setVisibility(View.GONE);
-                }
-                else{
-                    findViewById(R.id.hand_tick).setVisibility(View.GONE);
-                }
-            }
-        });
     }
 
     private ServiceConnection mConnection = new ServiceConnection() {
@@ -387,25 +310,21 @@ public class MainActivity extends WearableActivity
 
     @Override
     public void changeContext(boolean firstContext) {
-        if(firstContext){
+        if(firstContext) {
+            startMeasurement();
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    FrameLayout oldLayout = (FrameLayout) findViewById(R.id.progressBar);
-                    oldLayout.setVisibility(View.GONE);
-                    FrameLayout newLayout = (FrameLayout) findViewById(R.id.sensorSelector);
-                    newLayout.setVisibility(View.VISIBLE);
+                    bt_start_stop.setVisibility(View.VISIBLE);
                 }
             });
         }
         else {
+            stopMeasurement();
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    FrameLayout oldLayout = (FrameLayout) findViewById(R.id.sensorSelector);
-                    oldLayout.setVisibility(View.GONE);
-                    FrameLayout newLayout = (FrameLayout) findViewById(R.id.progressBar);
-                    newLayout.setVisibility(View.VISIBLE);
+                    bt_start_stop.setVisibility(View.GONE);
                 }
             });
         }
