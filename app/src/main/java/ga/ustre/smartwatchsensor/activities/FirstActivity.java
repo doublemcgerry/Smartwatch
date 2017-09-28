@@ -32,6 +32,7 @@ import rz.thesis.server.serialization.action.auth.ConnectAction;
 import rz.thesis.server.serialization.action.auth.AuthCodeAction;
 import rz.thesis.server.serialization.action.lobby.SuccessfulConnectionEvent;
 import rz.thesis.server.serialization.action.management.DeviceAnnounceAction;
+import utility.Parameters;
 import utility.RandomUtils;
 import utility.ActionExecutor;
 import utility.SensorType;
@@ -114,7 +115,8 @@ public class FirstActivity extends WearableActivity implements ActionExecutor, W
             // We've bound to LocalService, cast the IBinder and get LocalService instance
             client = (WebSocketServerBinder) service;
             addCallbackToClient();
-            client.connect(clientId, URI.create("ws://192.168.1.28:8010/ws"));
+
+            client.connect(clientId, URI.create("ws://" +getIntent().getStringExtra(Parameters.IP_ADDRESS_PARAMETER) + ":8010/ws"));
         }
 
         @Override
