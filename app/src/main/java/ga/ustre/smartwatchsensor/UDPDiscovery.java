@@ -1,15 +1,17 @@
 package ga.ustre.smartwatchsensor;
 
 import android.os.AsyncTask;
-import android.util.Log;
+
+import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+
+import ga.ustre.smartwatchsensor.webvisservices.DiscoveryServicesDefinitions;
 
 /**
  * Created by achelius on 03/01/2017.
@@ -18,57 +20,55 @@ import java.net.UnknownHostException;
 public class UDPDiscovery {
 
     public interface Callbacks{
-        void onAddressDiscovered(final String address);
-        void onProgressUpdate(final String message);
+        void onAddressDiscovered(String address, DiscoveryServicesDefinitions defs);
+        void onProgressUpdate(String message);
     }
 
     private AsyncTask<Void, String, Void> async_client;
-    public String Message = "DISCOVER_AUISERVER_REQUEST";
+    public String Message = "DISCOVER_SERVICES";
     private final Callbacks callbacks;
-    private boolean working=false;
-    private boolean closing=false;
 
     public UDPDiscovery(Callbacks callbacks){
         this.callbacks=callbacks;
     }
 
+    public void restartSearch(){
+        if (async_client.getStatus()== AsyncTask.Status.FINISHED){
+            SendDiscovery();
+        }
+    }
 
     public void SendDiscovery() {
-        if (working){
-            return;
-        }
         async_client = new AsyncTask<Void, String, Void>() {
-
-            @Override
-            protected void onPreExecute() {
-                super.onPreExecute();
-                working=true;
-            }
-
             @Override
             protected Void doInBackground(Void... params) {
                 boolean foundAddress=false;
-                while(!closing && !foundAddress) {
+                while(!foundAddress) {
                     DatagramSocket ds = null;
 
                     try {
                         publishProgress("Searching for a server");
                         ds = new DatagramSocket();
                         DatagramPacket dp;
-                        dp = new DatagramPacket(Message.getBytes(), Message.length(), InetAddress.getByName("255.255.255.255"), 8091);
+                        dp = new DatagramPacket(Message.getBytes(), Message.length(), InetAddress.getByName("255.255.255.255"), 9000);
                         ds.setBroadcast(true);
                         ds.send(dp);
-                        publishProgress("Searching for a server...");
+                        publishProgress("Search packet sent");
                         byte[] recVBuf = new byte[1500];
                         dp = new DatagramPacket(recVBuf, recVBuf.length);
                         ds.setSoTimeout(4000);
                         ds.receive(dp);
-                        publishProgress("Connecting to :" + dp.getAddress().getHostAddress());
-                        callbacks.onAddressDiscovered(dp.getAddress().getHostAddress());
+                        publishProgress("Received the packet from the server");
+                        publishProgress("Found server:" + dp.getAddress().getHostAddress());
+
+                        String message = new String(dp.getData()).trim();
+                        Gson gson = new Gson();
+                        DiscoveryServicesDefinitions defs= gson.fromJson(message, DiscoveryServicesDefinitions.class);
+                        callbacks.onAddressDiscovered(dp.getAddress().getHostAddress(),defs);
                         foundAddress=true;
                     } catch (SocketTimeoutException e) {
                         //timeout
-                        publishProgress("No server found!");
+                        publishProgress("Timeout while waiting for response");
                         try {
                             Thread.sleep(2000);
                         } catch (InterruptedException e1) {
@@ -95,22 +95,9 @@ public class UDPDiscovery {
 
             protected void onPostExecute(Void result) {
                 super.onPostExecute(result);
-                working=false;
-                closing=false;
             }
         };
 
         async_client.execute();
     }
-
-    public boolean isWorking(){
-        return working;
-    }
-
-    public void stopDiscovery(){
-        closing=true;
-
-    }
-
-
 }

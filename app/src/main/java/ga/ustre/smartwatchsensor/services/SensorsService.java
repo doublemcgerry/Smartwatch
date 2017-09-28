@@ -20,6 +20,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import ga.ustre.smartwatchsensor.R;
 import ga.ustre.smartwatchsensor.UDPDiscovery;
 import ga.ustre.smartwatchsensor.WebSocketClientManager;
+import ga.ustre.smartwatchsensor.webvisservices.DiscoveryServicesDefinitions;
 import rz.thesis.server.serialization.action.Action;
 import rz.thesis.server.serialization.action.sensors.SensorDataSendAction;
 import utility.MovementType;
@@ -146,9 +147,10 @@ public class SensorsService extends Service implements SensorEventListener, UDPD
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {    }
 
+
     @Override
-    public void onAddressDiscovered(String address) {
-        client = new WebSocketClientManager(clientId,URI.create("ws://" + address + ":8091"), this);
+    public void onAddressDiscovered(String address, DiscoveryServicesDefinitions defs) {
+        client = new WebSocketClientManager(clientId,URI.create("ws://" + address + ":8010"), this);
         client.connect();
     }
 

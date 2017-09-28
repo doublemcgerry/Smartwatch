@@ -49,7 +49,7 @@ public class WebSocketManagerService extends Service implements WebSocketListene
     private UUID ACTIONID;
 
     private int reconnectionAttempts=0;
-    private int maxReconnectionAttempts =-1;
+    private int maxReconnectionAttempts =100;
 
 
     private class WebSocketManagerServiceBinder extends Binder implements WebSocketServerBinder{
