@@ -13,7 +13,10 @@ import android.util.SparseArray;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -129,7 +132,10 @@ public class SensorsService extends Service implements SensorEventListener, UDPD
         if (event.sensor.getType() == 10) {
             if (event.values[0] > maximum || event.values[1] > maximum || event.values[2] > maximum) {
                 if (client != null) {
-                    client.sendMovement(new SensorDataSendAction("Gerry", new SensorData(1l, MovementType.GENERIC_MOVEMENT)));
+                    Map<String,String> data=new HashMap<String, String>();
+                    data.put("movType",MovementType.GENERIC_MOVEMENT.toString());
+                    client.sendMovement(new SensorDataSendAction(
+                            new SensorData(Calendar.getInstance().getTimeInMillis(),"MOVEMENT",data)));
                 }
 
             }
