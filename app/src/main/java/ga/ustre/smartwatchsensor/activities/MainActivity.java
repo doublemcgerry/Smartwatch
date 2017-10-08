@@ -28,6 +28,8 @@ import android.widget.TextView;
 
 import java.net.URI;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import ga.ustre.smartwatchsensor.R;
@@ -104,7 +106,10 @@ public class MainActivity extends WearableActivity
             @Override
             public void onClick(View view) {
                 if (client!=null) {
-                    client.sendAction(new SensorDataSendAction(clientId, new SensorData(Calendar.getInstance().getTimeInMillis(), MovementType.GENERIC_MOVEMENT)));
+                    Map<String,String> data=new HashMap<String, String>();
+                    data.put("movType",MovementType.GENERIC_MOVEMENT.toString());
+                    client.sendAction(new SensorDataSendAction(
+                            new SensorData(Calendar.getInstance().getTimeInMillis(),"MOVEMENT",data)));
                 }
             }
         });
@@ -219,7 +224,10 @@ public class MainActivity extends WearableActivity
         if (sensorEvent.sensor.getType() == 10) {
             if (sensorEvent.values[0] > maximum || sensorEvent.values[1] > maximum || sensorEvent.values[2] > maximum) {
                 if (client != null) {
-                    client.sendAction(new SensorDataSendAction(clientId, new SensorData(1l, MovementType.GENERIC_MOVEMENT)));
+                    Map<String,String> data=new HashMap<String, String>();
+                    data.put("movType",MovementType.GENERIC_MOVEMENT.toString());
+                    client.sendAction(new SensorDataSendAction(
+                            new SensorData(Calendar.getInstance().getTimeInMillis(),"MOVEMENT",data)));
                 }
             }
         }

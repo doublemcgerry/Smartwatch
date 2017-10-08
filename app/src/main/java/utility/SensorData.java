@@ -1,16 +1,20 @@
 package utility;
 
+import java.util.Map;
+
 /**
  * Created by achelius on 03/01/2017.
  */
 
 public class SensorData {
     private long timestamp;
-    private MovementType typeMovement;
+    private String type;
+    private Map<String,String> data;
 
-    public SensorData(long timestamp, MovementType typeMovement) {
+    public SensorData(long timestamp,String type,Map<String,String> data) {
         this.timestamp = timestamp;
-        this.typeMovement = typeMovement;
+        this.type=type;
+        this.data=data;
     }
 
     public long getTimestamp() {
@@ -21,11 +25,4 @@ public class SensorData {
         this.timestamp = timestamp;
     }
 
-    public MovementType getTypeMovement() {
-        return typeMovement;
-    }
-
-    public void setTypeMovement(MovementType typeMovement) {
-        this.typeMovement = typeMovement;
-    }
 }
