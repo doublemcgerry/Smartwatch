@@ -71,11 +71,6 @@ public class WebSocketManagerService extends Service implements WebSocketListene
         }
 
         @Override
-        public void sendMovement(SensorDataSendAction action) {
-            WebSocketManagerService.this.sendMovement(action);
-        }
-
-        @Override
         public void addCallback(WebSocketClientCallback callback) {
             WebSocketManagerService.this.addCallback(callback);
         }
@@ -161,16 +156,6 @@ public class WebSocketManagerService extends Service implements WebSocketListene
         if (this.client!=null){
             try{
                 action.setSource(ACTIONID);
-                this.client.sendAction(action);
-            }catch(Exception e){
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private void sendMovement(SensorDataSendAction action) {
-        if (this.client!=null){
-            try{
                 this.client.sendAction(action);
             }catch(Exception e){
                 e.printStackTrace();

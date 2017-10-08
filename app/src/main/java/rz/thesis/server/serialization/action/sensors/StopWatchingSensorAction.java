@@ -13,6 +13,6 @@ public class StopWatchingSensorAction extends Action {
     @Override
     public void execute(ActionExecutor actionExecutor, WebSocketServerBinder client) {
         actionExecutor.publishMessage("nun te move!");
-        actionExecutor.showIcon(R.drawable.ic_connected);
+        actionExecutor.showIcon(R.drawable.ic_stop);
     }
 }

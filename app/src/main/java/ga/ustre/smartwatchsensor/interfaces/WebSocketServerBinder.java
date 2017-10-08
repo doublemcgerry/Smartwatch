@@ -14,7 +14,6 @@ import rz.thesis.server.serialization.action.sensors.SensorDataSendAction;
 public interface WebSocketServerBinder{
     void connect(String clientID, URI uri);
     void sendAction(final Action action);
-    void sendMovement(SensorDataSendAction action);
     void addCallback(WebSocketClientCallback callback);
     void removeCallback();
     void disconnect() throws InterruptedException;

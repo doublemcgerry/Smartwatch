@@ -13,5 +13,8 @@ public class ExperienceEndedEvent extends LobbyAction {
     public void execute(ActionExecutor actionExecutor, WebSocketServerBinder client) {
         actionExecutor.publishMessage("Esperienza Terminata");
         actionExecutor.changeContext(false);
+        actionExecutor.hideIcon();
+        actionExecutor.publishMessage("In Attesa di una nuova esperienza");
+        actionExecutor.showProgressBar();
     }
 }

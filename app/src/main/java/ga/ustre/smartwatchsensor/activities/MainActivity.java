@@ -7,6 +7,7 @@ import android.content.ServiceConnection;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
+import android.hardware.SensorListener;
 import android.hardware.SensorManager;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
@@ -103,7 +104,7 @@ public class MainActivity extends WearableActivity
             @Override
             public void onClick(View view) {
                 if (client!=null) {
-                    client.sendMovement(new SensorDataSendAction("Gerry", new SensorData(Calendar.getInstance().getTimeInMillis(), MovementType.GENERIC_MOVEMENT)));
+                    client.sendAction(new SensorDataSendAction(clientId, new SensorData(Calendar.getInstance().getTimeInMillis(), MovementType.GENERIC_MOVEMENT)));
                 }
             }
         });
@@ -170,35 +171,45 @@ public class MainActivity extends WearableActivity
         Sensor linearAccelerationSensor = mSensorManager.getDefaultSensor(SENS_LINEAR_ACCELERATION);
         Sensor rotationVectorSensor = mSensorManager.getDefaultSensor(SENS_ROTATION_VECTOR);
 
-
         // Register the listener
         if (mSensorManager != null) {
-
             if (linearAccelerationSensor != null) {
                 mSensorManager.registerListener(this, linearAccelerationSensor, SensorManager.SENSOR_DELAY_NORMAL);
             } else {
                 Log.w(TAG, "No linear accelerometer found");
             }
-
-
             if (gyroscopeSensor != null) {
                 mSensorManager.registerListener(this, gyroscopeSensor, SensorManager.SENSOR_DELAY_NORMAL);
             } else {
                 Log.w(TAG, "No Gyroscope Sensor found");
             }
-
             if (rotationVectorSensor != null) {
                 mSensorManager.registerListener(this, rotationVectorSensor, SensorManager.SENSOR_DELAY_NORMAL);
             } else {
                 Log.d(TAG, "No Rotation Vector Sensor found");
             }
-
-
         }
     }
     private void stopMeasurement() {
+        Sensor gyroscopeSensor = mSensorManager.getDefaultSensor(SENS_GYROSCOPE);
+        Sensor linearAccelerationSensor = mSensorManager.getDefaultSensor(SENS_LINEAR_ACCELERATION);
+        Sensor rotationVectorSensor = mSensorManager.getDefaultSensor(SENS_ROTATION_VECTOR);
         if (mSensorManager != null) {
-            mSensorManager.unregisterListener(this);
+            if (linearAccelerationSensor != null) {
+                mSensorManager.unregisterListener(this, linearAccelerationSensor);
+            } else {
+                Log.w(TAG, "No linear accelerometer found");
+            }
+            if (gyroscopeSensor != null) {
+                mSensorManager.unregisterListener(this, gyroscopeSensor);
+            } else {
+                Log.w(TAG, "No Gyroscope Sensor found");
+            }
+            if (rotationVectorSensor != null) {
+                mSensorManager.unregisterListener(this, rotationVectorSensor);
+            } else {
+                Log.d(TAG, "No Rotation Vector Sensor found");
+            }
         }
     }
 
@@ -208,9 +219,8 @@ public class MainActivity extends WearableActivity
         if (sensorEvent.sensor.getType() == 10) {
             if (sensorEvent.values[0] > maximum || sensorEvent.values[1] > maximum || sensorEvent.values[2] > maximum) {
                 if (client != null) {
-                    client.sendMovement(new SensorDataSendAction("Gerry", new SensorData(1l, MovementType.GENERIC_MOVEMENT)));
+                    client.sendAction(new SensorDataSendAction(clientId, new SensorData(1l, MovementType.GENERIC_MOVEMENT)));
                 }
-
             }
         }
     }

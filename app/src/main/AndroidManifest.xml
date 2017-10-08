@@ -26,11 +26,13 @@
             android:exported="true"
             android:label="Discoverer"
             android:theme="@android:style/Theme.DeviceDefault.Light">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
         </activity>
         <service
             android:name=".services.WebSocketManagerService"
@@ -40,7 +42,8 @@
         <activity
             android:name=".activities.MainActivity"
             android:label="@string/title_activity_main"
-            android:theme="@android:style/Theme.DeviceDefault.Light"></activity>
+            android:theme="@android:style/Theme.DeviceDefault.Light">
+        </activity>
         <activity
             android:name=".activities.FirstActivity"
             android:label="@string/title_activity_first"

@@ -32,6 +32,7 @@ import rz.thesis.server.serialization.action.auth.ConnectAction;
 import rz.thesis.server.serialization.action.auth.AuthCodeAction;
 import rz.thesis.server.serialization.action.lobby.SuccessfulConnectionEvent;
 import rz.thesis.server.serialization.action.management.DeviceAnnounceAction;
+import utility.Parameters;
 import utility.RandomUtils;
 import utility.ActionExecutor;
 import utility.SensorType;
@@ -45,6 +46,7 @@ public class FirstActivity extends WearableActivity implements ActionExecutor, W
     private Button codeButton;
     private WebSocketServerBinder client;
     private String code;
+    private String url;
     private TextView firstChar;
     private TextView secondChar;
     private TextView thirdChar;
@@ -62,6 +64,13 @@ public class FirstActivity extends WearableActivity implements ActionExecutor, W
         pb_searching = (ProgressBar) findViewById(R.id.pb_first);
         tv_progress = (TextView) findViewById(R.id.tv_first);
         publishMessage("Connessione al server in corso...");
+
+        if(getIntent().getExtras() != null){
+            this.url = "ws://" + getIntent().getExtras().getString(Parameters.IP_ADDRESS_PARAMETER) + ":" + getIntent().getExtras().getInt(Parameters.HTTP_PORT_PARAMETER) + "/ws";
+        }
+        else {
+            this.url = "ws://192.168.137.1:8010/ws";
+        }
 
         String deviceName= RandomUtils.getDeviceName();
 
@@ -114,7 +123,7 @@ public class FirstActivity extends WearableActivity implements ActionExecutor, W
             // We've bound to LocalService, cast the IBinder and get LocalService instance
             client = (WebSocketServerBinder) service;
             addCallbackToClient();
-            client.connect(clientId, URI.create("ws://192.168.1.28:8010/ws"));
+            client.connect(clientId, URI.create(FirstActivity.this.url));
         }
 
         @Override
